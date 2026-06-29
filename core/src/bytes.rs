@@ -8,22 +8,28 @@
 /// Read a little-endian `u16` at `off`, or `0` if out of range.
 #[must_use]
 pub fn u16_le(buf: &[u8], off: usize) -> u16 {
-    let _ = (buf, off);
-    0 // RED stub
+    match buf.get(off..off + 2) {
+        Some(b) => u16::from_le_bytes([b[0], b[1]]),
+        None => 0,
+    }
 }
 
 /// Read a little-endian `u32` at `off`, or `0` if out of range.
 #[must_use]
 pub fn u32_le(buf: &[u8], off: usize) -> u32 {
-    let _ = (buf, off);
-    0 // RED stub
+    match buf.get(off..off + 4) {
+        Some(b) => u32::from_le_bytes([b[0], b[1], b[2], b[3]]),
+        None => 0,
+    }
 }
 
 /// Read a little-endian `u64` at `off`, or `0` if out of range.
 #[must_use]
 pub fn u64_le(buf: &[u8], off: usize) -> u64 {
-    let _ = (buf, off);
-    0 // RED stub
+    match buf.get(off..off + 8) {
+        Some(b) => u64::from_le_bytes([b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]]),
+        None => 0,
+    }
 }
 
 #[cfg(test)]
