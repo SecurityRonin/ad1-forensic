@@ -212,6 +212,8 @@ fn missing_later_segment_errors_when_data_needs_it() {
     std::fs::write(&first, &segs[0]).unwrap();
 
     let r = Ad1Reader::open(&first).unwrap();
+    // The absent later segment is reported (for the AD1-SEGMENT-MISSING audit).
+    assert_eq!(r.missing_segments(), vec![2]);
     let entry = find(&r, "root/sub/a.bin");
     let mut buf = vec![0u8; entry.size as usize];
     // a.bin spans into a missing segment -> loud error, not silent truncation.

@@ -90,6 +90,11 @@ impl SegmentSet {
         self.capacity
     }
 
+    /// 1-based indices of declared-but-missing segments. RED stub.
+    pub(crate) fn missing(&self) -> Vec<u32> {
+        Vec::new()
+    }
+
     /// Read exactly `len` bytes starting at logical `offset`, spanning segments.
     ///
     /// Returns [`Ad1Error::Malformed`] if the range runs past available data or

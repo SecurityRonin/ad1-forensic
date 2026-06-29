@@ -193,6 +193,13 @@ impl Ad1Reader {
         self.segment_count
     }
 
+    /// 1-based indices of segments the header declares but that are absent on
+    /// disk (feeds the `AD1-SEGMENT-MISSING` audit). Empty for a complete image.
+    #[must_use]
+    pub fn missing_segments(&self) -> Vec<u32> {
+        self.segments.missing()
+    }
+
     /// Read up to `buf.len()` decompressed bytes of `entry` starting at
     /// `offset`, inflating only the zlib chunks the range overlaps.
     ///
