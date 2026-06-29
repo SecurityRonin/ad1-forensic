@@ -5,15 +5,6 @@
 //! outside the buffer instead of panicking. Centralizing the bounds check here
 //! means no other module needs raw slice indexing.
 
-/// Read a little-endian `u16` at `off`, or `0` if out of range.
-#[must_use]
-pub fn u16_le(buf: &[u8], off: usize) -> u16 {
-    match buf.get(off..off + 2) {
-        Some(b) => u16::from_le_bytes([b[0], b[1]]),
-        None => 0,
-    }
-}
-
 /// Read a little-endian `u32` at `off`, or `0` if out of range.
 #[must_use]
 pub fn u32_le(buf: &[u8], off: usize) -> u32 {
@@ -38,11 +29,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn u16_reads_little_endian() {
-        assert_eq!(u16_le(&[0x34, 0x12], 0), 0x1234);
-    }
-
-    #[test]
     fn u32_reads_little_endian_at_offset() {
         let buf = [0xff, 0x78, 0x56, 0x34, 0x12];
         assert_eq!(u32_le(&buf, 1), 0x1234_5678);
@@ -57,10 +43,9 @@ mod tests {
     #[test]
     fn out_of_range_reads_return_zero_never_panic() {
         let buf = [0xaa, 0xbb, 0xcc];
-        assert_eq!(u16_le(&buf, 2), 0); // only 1 byte left
         assert_eq!(u32_le(&buf, 0), 0); // need 4, have 3
         assert_eq!(u64_le(&buf, 0), 0);
-        assert_eq!(u16_le(&[], 0), 0); // empty
         assert_eq!(u32_le(&buf, 99), 0); // far past the end
+        assert_eq!(u64_le(&[], 0), 0); // empty
     }
 }
