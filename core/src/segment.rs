@@ -44,6 +44,9 @@ impl SegmentSet {
         segment_count: u32,
         fragments_size: u32,
     ) -> Result<Self, Ad1Error> {
+        // cov:unreachable — `Ad1Reader::open` validates `fragments_size != 0`
+        // before constructing the SegmentSet; kept as a defense-in-depth guard so
+        // a future direct caller cannot trigger the stride underflow below.
         if fragments_size == 0 {
             return Err(Ad1Error::Malformed(
                 "segment header fragments_size is 0".into(),

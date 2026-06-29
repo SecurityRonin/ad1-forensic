@@ -343,6 +343,9 @@ fn read_metadata(seg: &SegmentSet, first_addr: u64) -> Result<Meta, Ad1Error> {
             break; // cycle in the metadata chain — stop, keep what we have
         }
         count += 1;
+        // cov:unreachable in unit tests — DoS backstop against an unbounded
+        // metadata chain; exercised by the fuzz target rather than a contrived
+        // 4097-record fixture.
         if count > MAX_META_RECORDS {
             return Err(Ad1Error::Malformed(format!(
                 "metadata chain exceeds {MAX_META_RECORDS} records"
@@ -397,6 +400,8 @@ fn walk_tree(
                 "tree cycle: item at {addr:#x} visited twice"
             )));
         }
+        // cov:unreachable in unit tests — DoS backstop against an unbounded tree;
+        // exercised by the fuzz target rather than a 5M-node fixture.
         if entries.len() >= MAX_ENTRIES {
             return Err(Ad1Error::Malformed(format!(
                 "tree exceeds {MAX_ENTRIES} entries"
