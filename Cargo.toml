@@ -3,6 +3,8 @@
 [workspace]
 resolver = "2"
 members = ["core", "forensic"]
+# `fuzz` is its own workspace (cargo-fuzz convention) and needs nightly.
+exclude = ["fuzz"]
 
 [workspace.package]
 version = "0.1.0"

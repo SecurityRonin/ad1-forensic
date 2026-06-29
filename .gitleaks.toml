@@ -1,0 +1,14 @@
+# gitleaks configuration for ad1-forensic.
+# Extends the upstream default rule set; this repo ships no secrets.
+title = "ad1-forensic gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures and crafted AD1 byte patterns are not secrets."
+paths = [
+    '''core/src/testfix\.rs''',
+    '''core/tests/.*''',
+    '''tests/data/.*''',
+]

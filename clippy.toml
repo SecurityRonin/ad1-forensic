@@ -1,0 +1,3 @@
+# Clippy reads the lowest declared MSRV so its suggestions stay MSRV-compatible
+# for the published libraries.
+msrv = "1.85.0"
