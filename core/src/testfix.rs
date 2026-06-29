@@ -1,4 +1,7 @@
-//! Spec-faithful AD1 fixture builder for integration tests.
+//! Spec-faithful AD1 fixture builder (test-only; enable the `testfix` feature).
+//!
+//! Shared by `ad1-core`'s and `ad1-forensic`'s integration tests so the encoder
+//! lives in one place. Never compiled into a normal/published build.
 //!
 //! Encodes a logical tree into AD1 bytes following the al3ks1s/AD1-tools layout
 //! (see `docs/format.md`). File data is compressed with **flate2** and stored
@@ -6,9 +9,9 @@
 //! `ad1-core`, so an addressing / chunk-table / hash bug is still caught even
 //! though both encoder and decoder share the structural offsets.
 //!
-//! Layout order places the item tree + metadata *first* (so it lives in segment
-//! 1) and bulk file data *after* it, mirroring how a missing later segment
-//! breaks data reads while leaving the tree intact.
+//! Layout order places the item tree + metadata *first* (so it lives in the
+//! first segment) and bulk file data *after* it, mirroring how a missing later
+//! segment breaks data reads while leaving the tree intact.
 #![allow(
     clippy::unwrap_used,
     clippy::expect_used,

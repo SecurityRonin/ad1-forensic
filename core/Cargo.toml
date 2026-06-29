@@ -15,17 +15,25 @@ description = "Pure-Rust reader for the AccessData AD1 logical image container (
 name = "ad1"
 path = "src/lib.rs"
 
+[features]
+# Spec-faithful AD1 fixture builder (`ad1::testfix`), shared by this crate's
+# integration tests AND `ad1-forensic`'s. Off by default; never compiled into a
+# normal/published build. Uses independent zlib (flate2) + RustCrypto md5/sha1 as
+# ground truth so chunk/addressing/hash bugs are still caught.
+testfix = ["dep:md-5", "dep:sha1"]
+
 [dependencies]
 flate2    = { workspace = true }
 thiserror = { workspace = true }
+md-5      = { workspace = true, optional = true }
+sha1      = { workspace = true, optional = true }
 
 [dev-dependencies]
-# Crafted AD1 fixtures: independent zlib (flate2) + RustCrypto md5/sha1 as ground
-# truth (so chunk/addressing/hash bugs are still caught), written to a tempdir.
-flate2   = { workspace = true }
+# Integration tests build fixtures via the `testfix` feature and write to a tempdir.
+ad1-core = { path = ".", features = ["testfix"] }
+tempfile = { workspace = true }
 md-5     = { workspace = true }
 sha1     = { workspace = true }
-tempfile = { workspace = true }
 
 [lints]
 workspace = true

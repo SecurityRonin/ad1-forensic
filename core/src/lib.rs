@@ -18,6 +18,9 @@
 mod bytes;
 mod segment;
 
+#[cfg(feature = "testfix")]
+pub mod testfix;
+
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;

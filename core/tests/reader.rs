@@ -6,8 +6,7 @@
 )]
 use std::fmt::Write as _;
 
-mod common;
-
+use ad1::testfix as common;
 use ad1::{Ad1Error, Ad1Reader};
 use md5::{Digest as _, Md5};
 use std::path::PathBuf;
