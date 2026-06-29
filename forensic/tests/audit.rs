@@ -1,5 +1,5 @@
 //! Integration tests for the AD1 forensic auditor.
-#![allow(clippy::unwrap_used, clippy::expect_used)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::format_collect)]
 
 use ad1::testfix;
 use ad1_forensic::audit;
