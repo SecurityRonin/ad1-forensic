@@ -5,6 +5,10 @@
 //! hashes are computed with **RustCrypto md-5/sha1** — libraries independent of
 //! `ad1-core`, so an addressing / chunk-table / hash bug is still caught even
 //! though both encoder and decoder share the structural offsets.
+//!
+//! Layout order places the item tree + metadata *first* (so it lives in segment
+//! 1) and bulk file data *after* it, mirroring how a missing later segment
+//! breaks data reads while leaving the tree intact.
 #![allow(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -56,7 +60,6 @@ struct Item {
     first_child: Option<usize>,
     next_sibling: Option<usize>,
     path: String,
-    // filled during layout (logical addresses)
     offset: u64,
     meta_addr: u64,
     zlib_addr: u64,
@@ -82,9 +85,6 @@ fn hex(bytes: &[u8]) -> String {
 
 fn flatten(tree: Vec<Node>) -> Vec<Item> {
     let mut items = Vec::new();
-    // The AD1 root is the first item; we wrap the supplied forest under it only
-    // if there is more than one top node. For our fixtures the caller passes a
-    // single Dir as the root.
     fn rec(node: Node, parent: Option<usize>, parent_path: &str, items: &mut Vec<Item>) -> usize {
         let (name, is_dir, data, children) = match node {
             Node::File(n, d) => (n.to_string(), false, Some(d), Vec::new()),
@@ -148,7 +148,7 @@ pub fn build(tree: Node) -> Built {
         o
     };
 
-    // 1. File data: chunks + chunk table, hashes.
+    // 1. Per-file size + hashes (no layout dependency).
     for it in &mut items {
         if it.is_dir {
             continue;
@@ -157,27 +157,17 @@ pub fn build(tree: Node) -> Built {
         it.size = data.len() as u64;
         it.md5 = Some(hex(&Md5::digest(&data)));
         it.sha1 = Some(hex(&Sha1::digest(&data)));
-        if data.is_empty() {
-            continue; // zero-byte file: no chunk table needed
-        }
-        let mut addrs: Vec<u64> = Vec::new();
-        for chunk in data.chunks(CHUNK_SIZE as usize) {
-            let comp = zlib(chunk);
-            addrs.push(append(&mut l, &comp));
-        }
-        // closing address = end of last chunk
-        addrs.push(l.len() as u64);
-        // chunk table: [count][addr0..addrN]
-        let count = (addrs.len() - 1) as u64;
-        let mut table = Vec::new();
-        table.extend_from_slice(&count.to_le_bytes());
-        for a in &addrs {
-            table.extend_from_slice(&a.to_le_bytes());
-        }
-        it.zlib_addr = append(&mut l, &table);
     }
 
-    // 2. Metadata lists (append records in reverse to chain `next`).
+    // 2. Reserve item records FIRST so the tree lands in segment 1.
+    for i in 0..items.len() {
+        let name_len = items[i].name.len();
+        let size = 0x30 + name_len + 8;
+        let off = append(&mut l, &vec![0u8; size]);
+        items[i].offset = off;
+    }
+
+    // 3. Metadata lists (append records in reverse to chain `next`).
     for i in 0..items.len() {
         let mut records: Vec<(u32, u32, Vec<u8>)> = Vec::new(); // (category, key, data)
         if !items[i].is_dir {
@@ -206,15 +196,31 @@ pub fn build(tree: Node) -> Built {
         items[i].meta_addr = first;
     }
 
-    // 3. Reserve item records, recording their offsets.
+    // 4. Bulk file data: chunks + chunk table (may span later segments).
     for i in 0..items.len() {
-        let name_len = items[i].name.len();
-        let size = 0x30 + name_len + 8;
-        let off = append(&mut l, &vec![0u8; size]);
-        items[i].offset = off;
+        if items[i].is_dir {
+            continue;
+        }
+        let data = items[i].data.clone().unwrap_or_default();
+        if data.is_empty() {
+            continue; // zero-byte file: no chunk table
+        }
+        let mut addrs: Vec<u64> = Vec::new();
+        for chunk in data.chunks(CHUNK_SIZE as usize) {
+            let comp = zlib(chunk);
+            addrs.push(append(&mut l, &comp));
+        }
+        addrs.push(l.len() as u64); // closing address = end of last chunk
+        let count = (addrs.len() - 1) as u64;
+        let mut table = Vec::new();
+        table.extend_from_slice(&count.to_le_bytes());
+        for a in &addrs {
+            table.extend_from_slice(&a.to_le_bytes());
+        }
+        items[i].zlib_addr = append(&mut l, &table);
     }
 
-    // 4. Write item fields now that all offsets are known.
+    // 5. Write item fields now that all offsets are known.
     for i in 0..items.len() {
         let it = &items[i];
         let o = it.offset as usize;
@@ -232,7 +238,7 @@ pub fn build(tree: Node) -> Built {
         put_u64(&mut l, o + 0x30 + it.name.len(), parent);
     }
 
-    // 5. Logical header (physical 0x200 == logical 0).
+    // 6. Logical header (physical 0x200 == logical 0).
     let root_off = items[0].offset;
     l[0..15].copy_from_slice(b"ADLOGICALIMAGE\0");
     put_u32(&mut l, 0x10, 4); // image_version = 4
@@ -245,7 +251,7 @@ pub fn build(tree: Node) -> Built {
     put_u64(&mut l, 0x34, 0x5c); // data_source_name_addr (logical)
     l[0x5c..0x5c + dsn.len()].copy_from_slice(dsn);
 
-    // 6. Segment header + final assembly.
+    // 7. Segment header + final assembly.
     let total = (MARGIN + l.len()) as u64;
     let fragments_size = total.div_ceil(0x1_0000).max(1) as u32;
     let mut seg = vec![0u8; MARGIN];
@@ -258,7 +264,6 @@ pub fn build(tree: Node) -> Built {
     let mut bytes = seg;
     bytes.extend_from_slice(&l);
 
-    // Expected facts in DFS order (matches reader output order).
     let expected = items
         .iter()
         .map(|it| Expected {
@@ -274,9 +279,19 @@ pub fn build(tree: Node) -> Built {
     Built { bytes, expected }
 }
 
+/// Pseudo-random, ~incompressible bytes (so file data genuinely spans segments).
+pub fn incompressible(len: usize) -> Vec<u8> {
+    let mut x: u32 = 0x1234_5678;
+    (0..len)
+        .map(|_| {
+            x = x.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+            (x >> 24) as u8
+        })
+        .collect()
+}
+
 /// A small canonical tree used across tests.
 pub fn sample_tree() -> Node {
-    let big: Vec<u8> = (0..200_000u32).map(|i| (i % 251) as u8).collect();
     Node::Dir(
         "root",
         vec![
@@ -284,7 +299,7 @@ pub fn sample_tree() -> Node {
             Node::Dir(
                 "sub",
                 vec![
-                    Node::File("a.bin", big),
+                    Node::File("a.bin", incompressible(200_000)),
                     Node::File("empty.dat", Vec::new()),
                 ],
             ),

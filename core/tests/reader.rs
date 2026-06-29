@@ -158,6 +158,69 @@ fn read_at_past_end_returns_zero() {
     assert_eq!(n, 0);
 }
 
+// ---- multi-segment chaining (build step 5) ------------------------------
+
+#[test]
+fn reads_file_data_spanning_multiple_segments() {
+    let built = common::build(common::sample_tree());
+    let logical_len = built.bytes.len() - common::MARGIN;
+    // fragments_size = 2 -> stride ≈ 127 KiB, so the 200 KB file crosses segments.
+    let fragments_size = 2u32;
+    let stride = (fragments_size as usize) * 0x1_0000 - common::MARGIN;
+    let n = logical_len.div_ceil(stride) as u32;
+    assert!(n >= 2, "fixture should split into >= 2 segments, got {n}");
+    let segs = common::split(&built.bytes, n, fragments_size);
+
+    let dir = tempfile::tempdir().unwrap();
+    let first = dir.path().join("multi.ad1");
+    for (i, seg) in segs.iter().enumerate() {
+        let name = if i == 0 {
+            "multi.ad1".to_string()
+        } else {
+            format!("multi.ad{}", i + 1)
+        };
+        std::fs::write(dir.path().join(name), seg).unwrap();
+    }
+
+    let r = Ad1Reader::open(&first).unwrap();
+    assert_eq!(r.segment_count(), n);
+    let entry = find(&r, "root/sub/a.bin");
+    let mut buf = vec![0u8; entry.size as usize];
+    let read = r.read_at(entry, 0, &mut buf).unwrap();
+    assert_eq!(read, entry.size as usize);
+    let exp = built
+        .expected
+        .iter()
+        .find(|e| e.path == "root/sub/a.bin")
+        .unwrap();
+    assert_eq!(&buf, exp.data.as_ref().unwrap());
+    assert_eq!(Some(hex(&Md5::digest(&buf))), entry.md5);
+}
+
+#[test]
+fn missing_later_segment_errors_when_data_needs_it() {
+    let built = common::build(common::sample_tree());
+    let logical_len = built.bytes.len() - common::MARGIN;
+    let fragments_size = 2u32;
+    let stride = (fragments_size as usize) * 0x1_0000 - common::MARGIN;
+    let n = logical_len.div_ceil(stride) as u32;
+    let segs = common::split(&built.bytes, n, fragments_size);
+
+    let dir = tempfile::tempdir().unwrap();
+    let first = dir.path().join("gap.ad1");
+    // Write ONLY the first segment; the rest are missing.
+    std::fs::write(&first, &segs[0]).unwrap();
+
+    let r = Ad1Reader::open(&first).unwrap();
+    let entry = find(&r, "root/sub/a.bin");
+    let mut buf = vec![0u8; entry.size as usize];
+    // a.bin spans into a missing segment -> loud error, not silent truncation.
+    assert!(matches!(
+        r.read_at(entry, 0, &mut buf),
+        Err(Ad1Error::Malformed(_))
+    ));
+}
+
 #[test]
 fn read_at_small_file_exact() {
     let built = common::build(common::sample_tree());
