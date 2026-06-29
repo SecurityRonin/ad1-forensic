@@ -102,3 +102,60 @@ fn missing_segment_is_reported() {
 fn find_subslice(hay: &[u8], needle: &[u8]) -> Option<usize> {
     hay.windows(needle.len()).position(|w| w == needle)
 }
+
+const MARGIN: usize = 512;
+fn phys(logical: u64) -> usize {
+    MARGIN + logical as usize
+}
+fn rd_u64(b: &[u8], p: usize) -> u64 {
+    u64::from_le_bytes(b[p..p + 8].try_into().unwrap())
+}
+fn put_u64(b: &mut [u8], p: usize, v: u64) {
+    b[p..p + 8].copy_from_slice(&v.to_le_bytes());
+}
+fn put_u32(b: &mut [u8], p: usize, v: u32) {
+    b[p..p + 4].copy_from_slice(&v.to_le_bytes());
+}
+fn item_offset(bytes: &[u8], name: &str) -> u64 {
+    let first = rd_u64(bytes, phys(0) + 0x24);
+    let mut stack = vec![first];
+    while let Some(addr) = stack.pop() {
+        if addr == 0 {
+            continue;
+        }
+        let base = phys(addr);
+        let nl = u32::from_le_bytes(bytes[base + 0x2c..base + 0x30].try_into().unwrap()) as usize;
+        if String::from_utf8_lossy(&bytes[base + 0x30..base + 0x30 + nl]) == name {
+            return addr;
+        }
+        stack.push(rd_u64(bytes, base));
+        stack.push(rd_u64(bytes, base + 0x08));
+    }
+    panic!("item {name} not found");
+}
+
+#[test]
+fn unparseable_image_is_reported_unreadable() {
+    let built = testfix::build(testfix::sample_tree());
+    let mut bytes = built.bytes;
+    put_u32(&mut bytes, 0x22, 0); // fragments_size = 0 -> open fails Malformed
+    let (_d, p) = write_one(&bytes, "bad.ad1");
+    let findings = audit(&p);
+    assert_eq!(by_code(&findings, "AD1-UNREADABLE").len(), 1);
+    assert_eq!(findings[0].severity, Some(Severity::High));
+}
+
+#[test]
+fn declared_size_larger_than_content_is_a_size_lie() {
+    let built = testfix::build(testfix::sample_tree());
+    let off = item_offset(&built.bytes, "a.bin");
+    let mut bytes = built.bytes;
+    let real = rd_u64(&bytes, phys(off) + 0x20);
+    // Inflate the declared size; the chunks still only yield `real` bytes.
+    put_u64(&mut bytes, phys(off) + 0x20, real + 50_000);
+    let (_d, p) = write_one(&bytes, "lie.ad1");
+    let findings = audit(&p);
+    let lies = by_code(&findings, "AD1-SIZE-LIE");
+    assert_eq!(lies.len(), 1);
+    assert_eq!(lies[0].category, Category::Structure);
+}
