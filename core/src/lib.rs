@@ -12,7 +12,9 @@
 //! `../HANDOFF.md` for the format spec, oracle, and the strict-TDD build plan.
 
 #![forbid(unsafe_code)]
-#![allow(clippy::missing_const_for_fn)] // scaffold stubs
+#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
+
+mod bytes;
 
 use std::path::Path;
 
