@@ -1,0 +1,23 @@
+[package]
+name = "ad1-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Pure-Rust reader for the AccessData AD1 logical image container (FTK Imager / Custom Content Image)"
+
+[lib]
+# The bare crate name `ad1` is free on crates.io, so import as `use ad1::…` while
+# the published PACKAGE is `ad1-core` (the fleet reader/analyzer split). If a
+# popular third-party `ad1` ever appears, fall back to `ad1_core` imports.
+name = "ad1"
+path = "src/lib.rs"
+
+[dependencies]
+flate2    = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

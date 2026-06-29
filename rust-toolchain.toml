@@ -1,0 +1,6 @@
+[toolchain]
+# Pin to the fleet's current stable (single source of truth for dev/CI/fmt).
+# Bump deliberately, fleet-wide. The DECLARED MSRV (rust-version = "1.85" in
+# Cargo.toml) is a separate, lower, downstream-facing promise — do not conflate.
+channel = "1.96.0"
+components = ["rustfmt", "clippy"]
