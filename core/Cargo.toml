@@ -8,6 +8,10 @@ repository.workspace = true
 authors.workspace = true
 description = "Pure-Rust reader for the AccessData AD1 logical image container (FTK Imager / Custom Content Image)"
 
+[[example]]
+name = "dump_fixture"
+required-features = ["testfix"]
+
 [lib]
 # The bare crate name `ad1` is free on crates.io, so import as `use ad1::…` while
 # the published PACKAGE is `ad1-core` (the fleet reader/analyzer split). If a
@@ -34,6 +38,7 @@ ad1-core = { path = ".", features = ["testfix"] }
 tempfile = { workspace = true }
 md-5     = { workspace = true }
 sha1     = { workspace = true }
+flate2   = { workspace = true } # craft short/corrupt zlib chunks in robustness tests
 
 [lints]
 workspace = true

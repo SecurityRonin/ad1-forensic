@@ -149,6 +149,29 @@ fn zero_chunk_count_on_a_sized_file_is_rejected() {
 }
 
 #[test]
+fn max_chunk_count_does_not_overflow() {
+    // Regression: a fuzzer-found add-overflow — chunk_count = u64::MAX made
+    // `count + 1` overflow before the bound check. Must reject, not panic.
+    let built = testfix::build(testfix::sample_tree());
+    let off = item_offset(&built.bytes, "a.bin");
+    let zlib_addr = rd_u64(&built.bytes, phys(off) + 0x18);
+    let mut bytes = built.bytes;
+    put_u64(&mut bytes, phys(zlib_addr), u64::MAX);
+    let (_d, p) = write_one(&bytes);
+    let r = Ad1Reader::open(&p).unwrap();
+    let entry = r
+        .entries()
+        .iter()
+        .find(|e| e.path == "root/sub/a.bin")
+        .unwrap();
+    let mut buf = vec![0u8; 64];
+    assert!(matches!(
+        r.read_at(entry, 0, &mut buf),
+        Err(Ad1Error::Malformed(_))
+    ));
+}
+
+#[test]
 fn corrupt_compressed_chunk_errors_on_read() {
     let built = testfix::build(testfix::sample_tree());
     let off = item_offset(&built.bytes, "a.bin");
@@ -256,6 +279,41 @@ fn absurd_segment_count_is_rejected_not_allocated() {
     put_u32(&mut bytes, 0x1c, 100_000); // segment_number well past the cap
     let (_d, p) = write_one(&bytes);
     assert!(matches!(Ad1Reader::open(&p), Err(Ad1Error::Malformed(_))));
+}
+
+#[test]
+fn short_non_last_chunk_does_not_panic() {
+    // Regression: a fuzzer-found subtract-overflow — a non-last chunk that
+    // inflates to fewer than chunk_size bytes leaves a hole, and the next chunk's
+    // `cur - chunk_base` underflowed. read_at must stop with a short read.
+    use flate2::write::ZlibEncoder;
+    use flate2::Compression;
+    use std::io::Write as _;
+
+    let built = testfix::build(testfix::sample_tree());
+    let off = item_offset(&built.bytes, "a.bin");
+    let zlib_addr = rd_u64(&built.bytes, phys(off) + 0x18);
+    let chunk0 = rd_u64(&built.bytes, phys(zlib_addr) + 0x08);
+    // A valid zlib stream that inflates to only 16 bytes (« 64 KiB chunk size).
+    let mut enc = ZlibEncoder::new(Vec::new(), Compression::default());
+    enc.write_all(&[0u8; 16]).unwrap();
+    let short = enc.finish().unwrap();
+
+    let mut bytes = built.bytes;
+    bytes[phys(chunk0)..phys(chunk0) + short.len()].copy_from_slice(&short);
+    let (_d, p) = write_one(&bytes);
+    let r = Ad1Reader::open(&p).unwrap();
+    let entry = r
+        .entries()
+        .iter()
+        .find(|e| e.path == "root/sub/a.bin")
+        .unwrap();
+    let mut buf = vec![0u8; entry.size as usize];
+    let n = r.read_at(entry, 0, &mut buf).unwrap(); // must not panic
+    assert!(
+        n < entry.size as usize,
+        "short chunk should yield a short read"
+    );
 }
 
 #[test]

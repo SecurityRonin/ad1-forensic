@@ -235,19 +235,21 @@ impl Ad1Reader {
         let cs = u64::from(self.chunk_size);
         let count = u64_le(&self.segments.read(entry.zlib_addr, 8)?, 0);
         // A chunk table cannot have more addresses than the image has bytes/8.
+        // `count >= max_addrs` is the overflow-safe form of `count + 1 > max_addrs`.
         let max_addrs = self.segments.capacity() / 8 + 2;
-        if count == 0 || count + 1 > max_addrs {
+        if count == 0 || count >= max_addrs {
             return Err(Ad1Error::Malformed(format!(
                 "file '{}' declares implausible chunk count {count}",
                 entry.path
             )));
         }
+        let table_len = (count as usize).saturating_add(1).saturating_mul(8);
         let addr_bytes = self
             .segments
-            .read(entry.zlib_addr + 8, (count as usize + 1) * 8)?;
-        let addr = |i: u64| u64_le(&addr_bytes, (i * 8) as usize);
+            .read(entry.zlib_addr.saturating_add(8), table_len)?;
+        let addr = |i: u64| u64_le(&addr_bytes, (i.saturating_mul(8)) as usize);
 
-        let end = offset + want_total as u64;
+        let end = offset.saturating_add(want_total as u64);
         let mut produced = 0usize;
         let mut cur = offset;
         let mut ci = offset / cs;
@@ -261,8 +263,14 @@ impl Ad1Reader {
             }
             let comp = self.segments.read(start, (stop - start) as usize)?;
             let raw = inflate(&comp, self.chunk_size as usize)?;
-            let chunk_base = ci * cs;
-            let chunk_end = chunk_base + raw.len() as u64;
+            let chunk_base = ci.saturating_mul(cs);
+            let chunk_end = chunk_base.saturating_add(raw.len() as u64);
+            // A chunk that inflated to fewer than `cs` bytes leaves a hole before
+            // this chunk's base: the declared size lies. Stop with what we have
+            // (the auditor flags the short read as AD1-SIZE-LIE).
+            if cur < chunk_base {
+                break;
+            }
             if cur < chunk_end {
                 let from = (cur - chunk_base) as usize;
                 let n = (raw.len() - from).min((end - cur) as usize);

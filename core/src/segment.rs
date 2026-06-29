@@ -17,6 +17,11 @@ use crate::Ad1Error;
 /// Bytes skipped at the start of every segment (header / margin).
 pub(crate) const MARGIN: u64 = 512;
 
+/// Largest accepted segment count. A 64 Ki-segment image at 1.5 GB/segment is
+/// ~96 TB — generous; the cap stops an attacker-controlled `segment_number` from
+/// driving a multi-gigabyte `Vec` allocation or a billions-long open loop.
+const MAX_SEGMENTS: u32 = 65_536;
+
 #[derive(Debug)]
 struct Seg {
     handle: RefCell<File>,
@@ -52,6 +57,11 @@ impl SegmentSet {
                 "segment header fragments_size is 0".into(),
             ));
         }
+        if segment_count > MAX_SEGMENTS {
+            return Err(Ad1Error::Malformed(format!(
+                "segment header declares {segment_count} segments (> {MAX_SEGMENTS})"
+            )));
+        }
         let stride = u64::from(fragments_size) * 65536 - MARGIN;
 
         let first_str = first.to_string_lossy().to_string();
@@ -59,7 +69,8 @@ impl SegmentSet {
         let mut base = first_str.clone();
         base.pop();
 
-        let mut segs = Vec::with_capacity(segment_count as usize);
+        // Grow as segments are found; never pre-allocate the attacker's count.
+        let mut segs = Vec::new();
         let mut capacity = 0u64;
         for i in 1..=segment_count {
             let path = if i == 1 {
