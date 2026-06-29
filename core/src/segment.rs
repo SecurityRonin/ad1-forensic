@@ -90,9 +90,13 @@ impl SegmentSet {
         self.capacity
     }
 
-    /// 1-based indices of declared-but-missing segments. RED stub.
+    /// 1-based indices of declared-but-missing segments.
     pub(crate) fn missing(&self) -> Vec<u32> {
-        Vec::new()
+        self.segs
+            .iter()
+            .enumerate()
+            .filter_map(|(i, s)| s.is_none().then_some(i as u32 + 1))
+            .collect()
     }
 
     /// Read exactly `len` bytes starting at logical `offset`, spanning segments.
