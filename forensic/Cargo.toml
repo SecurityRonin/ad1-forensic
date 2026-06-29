@@ -15,6 +15,14 @@ description = "Forensic anomaly auditor for AccessData AD1 logical images — pe
 ad1-core        = { workspace = true }
 forensicnomicon = { workspace = true }
 thiserror       = { workspace = true }
+# Recompute stored MD5/SHA1 to verify them (pure-Rust RustCrypto).
+md-5            = { workspace = true }
+sha1            = { workspace = true }
+
+[dev-dependencies]
+# Build crafted AD1 images (incl. tampered/encrypted/segment-gap variants).
+ad1-core = { workspace = true, features = ["testfix"] }
+tempfile = { workspace = true }
 
 [lints]
 workspace = true
