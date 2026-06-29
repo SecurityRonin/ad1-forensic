@@ -1,0 +1,28 @@
+site_name: ad1-forensic
+site_description: Pure-Rust reader + forensic auditor for AccessData AD1 logical images
+site_url: https://securityronin.github.io/ad1-forensic/
+repo_url: https://github.com/SecurityRonin/ad1-forensic
+repo_name: SecurityRonin/ad1-forensic
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+  features:
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Format: format.md
+  - Validation: validation.md
+  - Privacy: privacy.md
+  - Terms: terms.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - tables
