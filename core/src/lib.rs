@@ -1,18 +1,11 @@
-//! `ad1` — pure-Rust reader for the **AccessData AD1** logical image container
-//! (FTK Imager "Custom Content Image").
+//! `ad1` — pure-Rust reader for the **AccessData AD1** logical image container.
 //!
-//! AD1 is a *logical* file/folder container — NOT a sector-level disk image. It
-//! stores a tree of files + per-file metadata (name, timestamps, attributes) +
-//! the file data in zlib-compressed chunks + stored MD5/SHA1 hashes, across one
-//! or more segments (`.ad1`, `.ad2`, …). So this reader exposes a **virtual
-//! filesystem** (path → bytes + metadata), like a zip/tar reader — there is no
-//! block device / partition / filesystem layer underneath it.
-//!
-//! STATUS: **SCAFFOLD ONLY** — nothing below is implemented. See
-//! `../HANDOFF.md` for the format spec, oracle, and the strict-TDD build plan.
+//! STATUS: RED — public API surface only; behavior is stubbed so the integration
+//! tests fail until the reader is implemented (see `../HANDOFF.md`).
 
 #![forbid(unsafe_code)]
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
+#![allow(clippy::missing_const_for_fn, unused_variables)]
 
 mod bytes;
 
@@ -28,7 +21,7 @@ pub enum Ad1Error {
     Io(#[from] std::io::Error),
     #[error("not an AD1 image: {0}")]
     NotAd1(String),
-    #[error("unsupported AD1 feature: {0}")] // e.g. ADCRYPT (encrypted)
+    #[error("unsupported AD1 feature: {0}")]
     Unsupported(String),
     #[error("malformed AD1 structure: {0}")]
     Malformed(String),
@@ -37,64 +30,73 @@ pub enum Ad1Error {
 /// One node in the AD1 logical file tree.
 #[derive(Debug, Clone)]
 pub struct Ad1Entry {
-    /// Logical path within the image (POSIX-style, `/`-separated).
     pub path: String,
-    /// True for a directory node (no file data).
     pub is_dir: bool,
-    /// Uncompressed file size in bytes (0 for directories).
     pub size: u64,
-    // TODO: timestamps, attributes, and the stored MD5/SHA1 the auditor verifies.
+    pub item_type: u32,
+    pub md5: Option<String>,
+    pub sha1: Option<String>,
+    pub modified: Option<String>,
+    pub accessed: Option<String>,
+    pub changed: Option<String>,
+    pub(crate) zlib_addr: u64,
 }
 
 /// A reader over an AD1 logical image (its first segment plus any `.ad2`…).
+#[derive(Debug)]
 pub struct Ad1Reader {
-    // TODO: segment handles, the parsed file tree, the offset/chunk map.
+    entries: Vec<Ad1Entry>,
 }
 
 impl Ad1Reader {
-    /// Open an AD1 image given the path to its **first** segment (`*.ad1`);
-    /// subsequent segments are discovered alongside it.
+    /// Open an AD1 image — NOT YET IMPLEMENTED.
     ///
     /// # Errors
-    /// Not yet implemented — always returns [`Ad1Error::Unsupported`].
-    pub fn open(_first_segment: &Path) -> Result<Self, Ad1Error> {
-        Err(Ad1Error::Unsupported(
-            "ad1-core is a scaffold — see HANDOFF.md".into(),
-        ))
+    /// Always returns [`Ad1Error::Unsupported`] in this RED stub.
+    pub fn open(first_segment: &Path) -> Result<Self, Ad1Error> {
+        Err(Ad1Error::Unsupported("ad1-core not implemented".into()))
     }
 
-    /// The logical file tree (depth-first, directories before their children).
     #[must_use]
     pub fn entries(&self) -> &[Ad1Entry] {
-        &[]
+        &self.entries
     }
 
-    /// Read up to `buf.len()` decompressed bytes of `entry` starting at `offset`.
+    #[must_use]
+    pub fn image_version(&self) -> u32 {
+        0
+    }
+
+    #[must_use]
+    pub fn chunk_size(&self) -> u32 {
+        0
+    }
+
+    #[must_use]
+    pub fn segment_count(&self) -> u32 {
+        0
+    }
+
+    /// Read decompressed bytes — NOT YET IMPLEMENTED.
     ///
     /// # Errors
-    /// Not yet implemented.
+    /// Never errors in this RED stub; always reports 0 bytes read.
     pub fn read_at(
         &self,
-        _entry: &Ad1Entry,
-        _offset: u64,
-        _buf: &mut [u8],
+        entry: &Ad1Entry,
+        offset: u64,
+        buf: &mut [u8],
     ) -> Result<usize, Ad1Error> {
-        Err(Ad1Error::Unsupported("not implemented".into()))
+        Ok(0)
     }
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 
     #[test]
     fn marker_is_the_documented_string() {
         assert_eq!(&AD1_SEGMENTED_MARKER[..15], b"ADSEGMENTEDFILE");
-    }
-
-    #[test]
-    fn open_scaffold_errors_cleanly() {
-        assert!(Ad1Reader::open(Path::new("/nonexistent.ad1")).is_err());
     }
 }
