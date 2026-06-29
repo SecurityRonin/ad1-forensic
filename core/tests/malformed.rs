@@ -247,6 +247,18 @@ fn chunk_length_exceeding_image_size_is_rejected() {
 }
 
 #[test]
+fn absurd_segment_count_is_rejected_not_allocated() {
+    // Regression: a fuzzer-found OOM — a ~2.25e9 segment_number drove
+    // Vec::with_capacity(segment_count) to a 72 GB allocation. The count must be
+    // capped and rejected loud, never pre-allocated.
+    let built = testfix::build(testfix::sample_tree());
+    let mut bytes = built.bytes;
+    put_u32(&mut bytes, 0x1c, 100_000); // segment_number well past the cap
+    let (_d, p) = write_one(&bytes);
+    assert!(matches!(Ad1Reader::open(&p), Err(Ad1Error::Malformed(_))));
+}
+
+#[test]
 fn read_at_directory_and_empty_file_yield_zero() {
     let built = testfix::build(testfix::sample_tree());
     let (_d, p) = write_one(&built.bytes);

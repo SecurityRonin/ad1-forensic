@@ -1,0 +1,35 @@
+# Fuzz targets for the AD1 untrusted-input parser (Paranoid Gatekeeper).
+# Its own workspace, per cargo-fuzz convention; excluded from the root workspace.
+[package]
+name = "ad1-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+tempfile = "3"
+ad1-core = { path = "../core" }
+ad1-forensic = { path = "../forensic" }
+
+[[bin]]
+name = "fuzz_reader"
+path = "fuzz_targets/fuzz_reader.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_forensic"
+path = "fuzz_targets/fuzz_forensic.rs"
+test = false
+doc = false
+bench = false
+
+[profile.release]
+debug = 1
+
+[workspace]
