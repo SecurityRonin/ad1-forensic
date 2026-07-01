@@ -33,5 +33,7 @@ hashes), so the crate is portable and fits the fleet's C-free tree.
 - **Bind the C `libad1`** — rejected: pulls a GPL C dependency into an
   `#![forbid(unsafe_code)]`, Apache-2.0, pure-Rust tree; cross-compilation and
   supply-chain cost.
-- **Don't support AD1** — rejected: it is a common FTK output investigators
-  cannot otherwise open in the Rust/TSK stack.
+- **Don't support AD1** — rejected: AD1 is a secondary format (FTK Imager's
+  *logical* acquisition output; E01 dominates imaging), but it is still
+  encountered *and* unreadable anywhere in the OSS/Rust/TSK stack. The gap — real
+  usage with zero open-source support — is the case for building, not prevalence.
