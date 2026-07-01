@@ -16,13 +16,26 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --workspace --all-features
-      # Publish the reader first; the auditor depends on it.
+      # Publish the reader first; the auditor depends on it. Each step is
+      # idempotent: skip if that exact version is already on crates.io (so a tag
+      # for an already-published version yields a green run, not a failure).
       - name: Publish ad1-core
-        run: cargo publish -p ad1-core --token "${{ secrets.CARGO_REGISTRY_TOKEN }}"
-      - name: Wait for crates.io to index ad1-core
-        run: sleep 30
+        run: |
+          v=$(grep -m1 '^version' Cargo.toml | sed -E 's/.*"(.*)".*/\1/')
+          if curl -sf -A "ad1-forensic-release" "https://crates.io/api/v1/crates/ad1-core/$v" >/dev/null; then
+            echo "ad1-core $v already published — skipping"
+          else
+            cargo publish -p ad1-core --token "${{ secrets.CARGO_REGISTRY_TOKEN }}"
+            sleep 30 # let crates.io index before the dependent publish
+          fi
       - name: Publish ad1-forensic
-        run: cargo publish -p ad1-forensic --token "${{ secrets.CARGO_REGISTRY_TOKEN }}"
+        run: |
+          v=$(grep -m1 '^version' Cargo.toml | sed -E 's/.*"(.*)".*/\1/')
+          if curl -sf -A "ad1-forensic-release" "https://crates.io/api/v1/crates/ad1-forensic/$v" >/dev/null; then
+            echo "ad1-forensic $v already published — skipping"
+          else
+            cargo publish -p ad1-forensic --token "${{ secrets.CARGO_REGISTRY_TOKEN }}"
+          fi
 
   github-release:
     needs: publish
