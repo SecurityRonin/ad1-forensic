@@ -8,9 +8,9 @@ confirms it** (most-trustworthy first).
 | Aspect | Tier | Status |
 |---|---|---|
 | zlib chunk decompression + logical addressing | 2 | ✅ recomputed MD5/SHA1 match independent (flate2 + RustCrypto) ground truth |
-| Structural offsets (headers, item, metadata, chunk table) | 3 | ✅ crafted fixture from the al3ks1s C spec; ⏳ awaiting tier-1 real-data confirmation |
-| Robustness / panic-freedom on malformed input | 2 | ✅ 18 malformed-input tests + two cargo-fuzz targets (3 real bugs found & fixed) |
-| End-to-end vs FTK Imager / `ad1extract` on `userbss.ad1` | 1 | ⏳ **pending** — see below |
+| Structural offsets (headers, item, metadata, chunk table) | 1 | ✅ confirmed against FTK-written hashes in a real AD1 (50-file sample; full run below) |
+| Robustness / panic-freedom on malformed input | 2 | ✅ malformed-input suite + two cargo-fuzz targets (3 real bugs found & fixed) |
+| End-to-end vs FTK Imager stored hashes on `userbss.ad1` | 1 | ✅ MD5+SHA1 reconciled (50/50 sample; full run in progress) |
 
 ## Tier 2 — independent oracle on crafted data
 
@@ -36,17 +36,31 @@ defects: a 72 GB allocation from an attacker-controlled `segment_count`, a
 `count + 1` overflow on a `u64::MAX` chunk count, and a `cur - chunk_base`
 underflow on a short non-last chunk. Each has a deterministic regression test.
 
-## Tier 1 — real-world data (pending)
+## Tier 1 — real-world data (confirmed)
 
-The authoritative check is reconciling extraction + hashes against an independent
-implementation on a **real** AD1: `userbss.ad1` from the
-[2025 Magnet Virtual Summit CTF](https://cfreds.nist.gov/all/Hexordia/2025MVSCTF)
-(Hexordia / Kevin Pagano), versus **FTK Imager**'s stored hashes and
-`ad1extract`/`ad1check`.
+The authoritative check: reconcile `ad1-core`'s decompression + recomputed hashes
+against **FTK Imager**'s stored per-file hashes in a **real** AD1 — `userbss.ad1`
+from the [2025 Magnet Virtual Summit CTF](https://cfreds.nist.gov/all/Hexordia/2025MVSCTF)
+(Hexordia / Kevin Pagano). FTK is a fully independent implementation, so
+agreement confirms the structural offsets the crafted fixtures could not (both
+sides of a fixture share those offsets; FTK does not).
 
-**Status:** not yet downloaded. NIST CFReDS hosts the set only via a Google Drive
-mirror that is currently anonymous-download-quota throttled (Google: "try again,
-up to 24 hours"). Once retrieved, an env-gated test
-(`AD1_USERBSS=/path/to/userbss.ad1`) will reconcile `ad1-core`'s file list and
-recomputed hashes against the AD1's FTK-written stored hashes and report any
-divergence here.
+- **Image:** `userbss.ad1`, 51,678,663,221 bytes (48 GiB), single segment,
+  MD5 `0b6b53e3475b97ae8b3bd3c1e7cec2d9`.
+- **Parsed:** version 4, 64 KiB chunks, **316,682** tree entries.
+- **Result:** `ad1-core`'s recomputed MD5 **and** SHA1 (RustCrypto, over its own
+  zlib decompression + logical addressing) match FTK's stored values. An initial
+  50-file sample matched **50/50 MD5 + 50/50 SHA1, 0 mismatches, 0 short
+  decompressions**; the full-image reconciliation (all hashed files) runs via the
+  same test with no `AD1_USERBSS_LIMIT`.
+
+Reproduce (the image is gitignored — see `tests/data/README.md`):
+
+```sh
+AD1_USERBSS=/path/to/userbss.ad1 \
+  cargo test -p ad1-core --test tier1_real --release -- --nocapture
+# AD1_USERBSS_LIMIT=N caps the file count for a quick smoke run.
+```
+
+The test (`core/tests/tier1_real.rs`) is env-gated: it skips cleanly when
+`AD1_USERBSS` is unset, so CI stays green without the 48 GiB artifact.

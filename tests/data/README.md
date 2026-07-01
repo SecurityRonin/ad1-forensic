@@ -18,11 +18,14 @@ downloaded manually.
 - **Drive file id:** `1ImeVi8BzHcuLDOV7LhAle9kRnZOMFb64` (folder `1gHQsfx1hqCv-V4Anm2eYukB4jPtraNBH`).
 - **Type:** AccessData AD1 logical image (FTK Imager) with FTK-computed stored
   per-file hashes — the independent oracle for tier-1 validation.
-- **Status (2026-06-30):** **not downloaded.** The Drive mirror returns Google's
-  anonymous-download quota error ("try again, up to 24 h"). Retry the Drive link
-  or fetch via a signed-in browser. Record MD5/SHA256 + size here once pulled.
+- **Status:** **downloaded** (via gdown once Google's per-file quota cleared).
+  Size **51,678,663,221 bytes** (48 GiB), single segment, magic `ADSEGMENTEDFILE`.
+  **MD5** `0b6b53e3475b97ae8b3bd3c1e7cec2d9`. Gitignored (`/tests/data/*.ad*`) —
+  not committed.
 - **License/redistribution:** NIST CFReDS dataset — verify the dataset terms
   before redistributing; the bytes are **not** committed regardless.
-- **Used by (planned):** an env-gated test (`AD1_USERBSS=/path/to/userbss.ad1`)
-  reconciling `ad1-core` extraction + recomputed hashes against the AD1's stored
-  hashes and `ad1extract`/`ad1check` (al3ks1s/AD1-tools) / FTK Imager.
+- **Used by:** the env-gated tier-1 test `core/tests/tier1_real.rs`
+  (`AD1_USERBSS=/path/to/userbss.ad1`) reconciles `ad1-core`'s recomputed MD5/SHA1
+  against the AD1's FTK-written stored hashes. The image parses to **316,682**
+  entries; an initial 50-file sample matched **50/50 MD5 + 50/50 SHA1, 0
+  mismatches** (see `docs/validation.md`).
