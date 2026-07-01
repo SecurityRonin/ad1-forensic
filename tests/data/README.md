@@ -26,6 +26,5 @@ downloaded manually.
   before redistributing; the bytes are **not** committed regardless.
 - **Used by:** the env-gated tier-1 test `core/tests/tier1_real.rs`
   (`AD1_USERBSS=/path/to/userbss.ad1`) reconciles `ad1-core`'s recomputed MD5/SHA1
-  against the AD1's FTK-written stored hashes. The image parses to **316,682**
-  entries; an initial 50-file sample matched **50/50 MD5 + 50/50 SHA1, 0
-  mismatches** (see `docs/validation.md`).
+  against the AD1's FTK-written stored hashes. Image parses to **316,682** entries;
+  all **299,729** files match **MD5 + SHA1, 0 mismatches** (see `docs/validation.md`).

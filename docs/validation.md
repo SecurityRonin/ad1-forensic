@@ -8,9 +8,9 @@ confirms it** (most-trustworthy first).
 | Aspect | Tier | Status |
 |---|---|---|
 | zlib chunk decompression + logical addressing | 2 | ✅ recomputed MD5/SHA1 match independent (flate2 + RustCrypto) ground truth |
-| Structural offsets (headers, item, metadata, chunk table) | 1 | ✅ confirmed against FTK-written hashes in a real AD1 (50-file sample; full run below) |
+| Structural offsets (headers, item, metadata, chunk table) | 1 | ✅ confirmed against FTK-written hashes across all 299,729 files of a real AD1 |
 | Robustness / panic-freedom on malformed input | 2 | ✅ malformed-input suite + two cargo-fuzz targets (3 real bugs found & fixed) |
-| End-to-end vs FTK Imager stored hashes on `userbss.ad1` | 1 | ✅ MD5+SHA1 reconciled (50/50 sample; full run in progress) |
+| End-to-end vs FTK Imager stored hashes on `userbss.ad1` | 1 | ✅ 299,729/299,729 files — MD5 + SHA1 both match, 0 mismatches |
 
 ## Tier 2 — independent oracle on crafted data
 
@@ -48,11 +48,10 @@ sides of a fixture share those offsets; FTK does not).
 - **Image:** `userbss.ad1`, 51,678,663,221 bytes (48 GiB), single segment,
   MD5 `0b6b53e3475b97ae8b3bd3c1e7cec2d9`.
 - **Parsed:** version 4, 64 KiB chunks, **316,682** tree entries.
-- **Result:** `ad1-core`'s recomputed MD5 **and** SHA1 (RustCrypto, over its own
-  zlib decompression + logical addressing) match FTK's stored values. An initial
-  50-file sample matched **50/50 MD5 + 50/50 SHA1, 0 mismatches, 0 short
-  decompressions**; the full-image reconciliation (all hashed files) runs via the
-  same test with no `AD1_USERBSS_LIMIT`.
+- **Result (full image):** for all **299,729** files, `ad1-core`'s recomputed MD5
+  **and** SHA1 (RustCrypto, over its own zlib decompression + logical addressing)
+  match FTK's stored values — **299,729/299,729 MD5, 299,729/299,729 SHA1, 0
+  mismatches, 0 short decompressions** (~600k independent comparisons, 10m49s).
 
 Reproduce (the image is gitignored — see `tests/data/README.md`):
 
