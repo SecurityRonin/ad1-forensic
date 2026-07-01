@@ -17,6 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - uses: dtolnay/rust-toolchain@nightly
+        with:
+          # ASan needs a dynamically-linked target; the musl-built cargo-fuzz
+          # otherwise defaults to musl (crt-static) and fails with E0463.
+          targets: x86_64-unknown-linux-gnu
       - uses: taiki-e/install-action@a402910a723481c4c80d006d75298c796a9c8695
         with:
           tool: cargo-fuzz
@@ -27,6 +31,6 @@ jobs:
           cargo run -p ad1-core --features testfix --example dump_fixture -- fuzz/corpus/fuzz_reader/seed.ad1
           cp fuzz/corpus/fuzz_reader/seed.ad1 fuzz/corpus/fuzz_forensic/seed.ad1
       - name: fuzz_reader (smoke)
-        run: cargo +nightly fuzz run fuzz_reader -- -max_total_time=60 -rss_limit_mb=4096
+        run: cargo +nightly fuzz run fuzz_reader --target x86_64-unknown-linux-gnu -- -max_total_time=60 -rss_limit_mb=4096
       - name: fuzz_forensic (smoke)
-        run: cargo +nightly fuzz run fuzz_forensic -- -max_total_time=60 -rss_limit_mb=4096
+        run: cargo +nightly fuzz run fuzz_forensic --target x86_64-unknown-linux-gnu -- -max_total_time=60 -rss_limit_mb=4096
