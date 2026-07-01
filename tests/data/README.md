@@ -18,10 +18,10 @@ downloaded manually.
 - **Drive file id:** `1ImeVi8BzHcuLDOV7LhAle9kRnZOMFb64` (folder `1gHQsfx1hqCv-V4Anm2eYukB4jPtraNBH`).
 - **Type:** AccessData AD1 logical image (FTK Imager) with FTK-computed stored
   per-file hashes — the independent oracle for tier-1 validation.
-- **Status:** **downloaded** (via gdown once Google's per-file quota cleared).
+- **Status:** **downloaded**, placed at `tests/data/userbss.ad1` in this repo.
   Size **51,678,663,221 bytes** (48 GiB), single segment, magic `ADSEGMENTEDFILE`.
-  **MD5** `0b6b53e3475b97ae8b3bd3c1e7cec2d9`. Gitignored (`/tests/data/*.ad*`) —
-  not committed.
+  **MD5** `0b6b53e3475b97ae8b3bd3c1e7cec2d9` (verified in place). Gitignored
+  (`/tests/data/*.ad*`) — not committed.
 - **License/redistribution:** NIST CFReDS dataset — verify the dataset terms
   before redistributing; the bytes are **not** committed regardless.
 - **Used by:** the env-gated tier-1 test `core/tests/tier1_real.rs`
