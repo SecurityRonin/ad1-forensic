@@ -7,3 +7,10 @@ Cargo.lock
 
 # Claude Code worktrees / local session state
 /.claude/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
