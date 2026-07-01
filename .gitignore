@@ -4,3 +4,6 @@ Cargo.lock
 # tests/data/README.md). Small clearly-licensed fixtures may be committed.
 /tests/data/*.ad*
 /site
+
+# Claude Code worktrees / local session state
+/.claude/
