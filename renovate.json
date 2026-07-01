@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "All cargo deps update weekly, never auto-merge.",
+      "matchManagers": ["cargo"],
+      "automerge": false,
+      "schedule": ["before 6am on monday"]
+    },
+    {
+      "description": "Fleet crates (SecurityRonin/h4x0r) — widen the requirement (rangeStrategy=bump un-sticks a caret pin that cannot reach a published next-minor) and group into one PR. This is a published-LIBRARY repo, so do NOT automerge: auto-bumping a library's own deps can silently raise its MSRV (see CLAUDE.md). Human-reviewed.",
+      "matchManagers": ["cargo"],
+      "matchSourceUrls": [
+        "https://github.com/SecurityRonin/**",
+        "https://github.com/h4x0r/**"
+      ],
+      "rangeStrategy": "bump",
+      "groupName": "securityronin fleet",
+      "automerge": false
+    }
+  ]
+}

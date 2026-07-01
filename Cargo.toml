@@ -3,6 +3,8 @@
 [workspace]
 resolver = "2"
 members = ["core", "forensic"]
+# `fuzz` is its own workspace (cargo-fuzz convention) and needs nightly.
+exclude = ["fuzz"]
 
 [workspace.package]
 version = "0.1.0"
@@ -21,6 +23,12 @@ flate2          = { version = "1", default-features = false, features = ["rust_b
 thiserror       = "2"
 # Shared forensic report model for `ad1-forensic` findings.
 forensicnomicon = "1"
+# Stored-hash recomputation (auditor) + fixture/validation ground truth.
+# RustCrypto, pure-Rust — keeps the dependency tree C-free.
+md-5            = "0.10"
+sha1            = "0.10"
+# Test-only: crafted AD1 fixtures written to a tempdir.
+tempfile        = "3"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

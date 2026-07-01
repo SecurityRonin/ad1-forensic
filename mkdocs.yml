@@ -1,0 +1,35 @@
+site_name: ad1-forensic
+site_description: Pure-Rust reader + forensic auditor for AccessData AD1 logical images
+site_url: https://securityronin.github.io/ad1-forensic/
+repo_url: https://github.com/SecurityRonin/ad1-forensic
+repo_name: SecurityRonin/ad1-forensic
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+  features:
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Format: format.md
+  - Validation: validation.md
+  - Decisions:
+      - Overview: decisions/README.md
+      - 0001 Pure-Rust reader: decisions/0001-build-pure-rust-ad1-reader.md
+      - 0002 Tiered validation: decisions/0002-tiered-independent-oracle-validation.md
+      - 0003 Panic-free parsing: decisions/0003-panic-free-bounded-parsing.md
+      - 0004 Refuse ADCRYPT: decisions/0004-detect-and-refuse-adcrypt.md
+      - 0005 forensicnomicon findings: decisions/0005-findings-via-forensicnomicon-observation.md
+  - Privacy: privacy.md
+  - Terms: terms.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - tables

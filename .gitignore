@@ -3,3 +3,4 @@ Cargo.lock
 # Large AD1 test images are gitignored + downloaded manually (provenance in
 # tests/data/README.md). Small clearly-licensed fixtures may be committed.
 /tests/data/*.ad*
+/site
