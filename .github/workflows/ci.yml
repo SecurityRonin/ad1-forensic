@@ -65,6 +65,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: gitleaks/gitleaks-action@83373cf2f8c4db6e24b41c1a9b086bb9619e9cd3 # v2.3.6
-        env:
-          GITLEAKS_CONFIG: .gitleaks.toml
+        with:
+          fetch-depth: 0 # full history for the secret scan
+      # Use the gitleaks BINARY (MIT, free) directly — the gitleaks-action wrapper
+      # now requires a paid license for organizations.
+      - name: Install gitleaks
+        run: |
+          VERSION=8.21.2
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+          sudo mv gitleaks /usr/local/bin/
+      - name: Scan for secrets
+        run: gitleaks detect --source . --config .gitleaks.toml --no-banner --redact
