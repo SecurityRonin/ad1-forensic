@@ -30,7 +30,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use forensic_bytes::{le_u32, le_u64};
+use safe_read::{le_u32, le_u64};
 use flate2::read::ZlibDecoder;
 use segment::SegmentSet;
 
