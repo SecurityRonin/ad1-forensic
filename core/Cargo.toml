@@ -25,12 +25,19 @@ path = "src/lib.rs"
 # normal/published build. Uses independent zlib (flate2) + RustCrypto md5/sha1 as
 # ground truth so chunk/addressing/hash bugs are still caught.
 testfix = ["dep:md-5", "dep:sha1"]
+# Adapt `Ad1Reader` to the forensic-vfs `FileSystem` trait (see `src/vfs.rs`) so
+# an AD1 logical image's file tree composes as `Arc<dyn FileSystem>` in the
+# forensic-vfs engine, like the DAR / ISO 9660 / UDF adapters.
+vfs = ["dep:forensic-vfs"]
 
 [dependencies]
 flate2    = { workspace = true }
 thiserror = { workspace = true }
 md-5      = { workspace = true, optional = true }
 sha1      = { workspace = true, optional = true }
+# forensic-vfs — the read-only FileSystem navigation contract. Optional so the
+# bare reader stays dependency-light; the `vfs` feature turns on the adapter.
+forensic-vfs = { version = "0.1", optional = true }
 
 [dev-dependencies]
 # Integration tests build fixtures via the `testfix` feature and write to a tempdir.
