@@ -21,6 +21,11 @@ mod segment;
 #[cfg(feature = "testfix")]
 pub mod testfix;
 
+#[cfg(feature = "vfs")]
+mod vfs;
+#[cfg(feature = "vfs")]
+pub use vfs::Ad1Vfs;
+
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
