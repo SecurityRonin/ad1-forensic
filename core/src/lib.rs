@@ -15,7 +15,6 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
 
-mod bytes;
 mod segment;
 
 #[cfg(feature = "testfix")]
@@ -31,7 +30,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use bytes::{u32_le, u64_le};
+use forensic_bytes::{le_u32, le_u64};
 use flate2::read::ZlibDecoder;
 use segment::SegmentSet;
 
@@ -143,8 +142,8 @@ impl Ad1Reader {
         }
 
         // --- segment header ---------------------------------------------
-        let segment_count = u32_le(&head, 0x1c).max(1);
-        let fragments_size = u32_le(&head, 0x22);
+        let segment_count = le_u32(&head, 0x1c).max(1);
+        let fragments_size = le_u32(&head, 0x22);
         if fragments_size == 0 {
             return Err(Ad1Error::Malformed(
                 "segment header fragments_size is 0".into(),
@@ -152,9 +151,9 @@ impl Ad1Reader {
         }
 
         // --- logical header ---------------------------------------------
-        let image_version = u32_le(&head, 0x210);
-        let chunk_size = u32_le(&head, 0x218);
-        let first_item_addr = u64_le(&head, 0x224);
+        let image_version = le_u32(&head, 0x210);
+        let chunk_size = le_u32(&head, 0x218);
+        let first_item_addr = le_u64(&head, 0x224);
         if chunk_size == 0 || chunk_size > MAX_CHUNK_SIZE {
             return Err(Ad1Error::Malformed(format!(
                 "implausible zlib chunk size {chunk_size} (image version {image_version})"
@@ -238,7 +237,7 @@ impl Ad1Reader {
         }
 
         let cs = u64::from(self.chunk_size);
-        let count = u64_le(&self.segments.read(entry.zlib_addr, 8)?, 0);
+        let count = le_u64(&self.segments.read(entry.zlib_addr, 8)?, 0);
         // A chunk table cannot have more addresses than the image has bytes/8.
         // `count >= max_addrs` is the overflow-safe form of `count + 1 > max_addrs`.
         let max_addrs = self.segments.capacity() / 8 + 2;
@@ -252,7 +251,7 @@ impl Ad1Reader {
         let addr_bytes = self
             .segments
             .read(entry.zlib_addr.saturating_add(8), table_len)?;
-        let addr = |i: u64| u64_le(&addr_bytes, (i.saturating_mul(8)) as usize);
+        let addr = |i: u64| le_u64(&addr_bytes, (i.saturating_mul(8)) as usize);
 
         let end = offset.saturating_add(want_total as u64);
         let mut produced = 0usize;
@@ -312,7 +311,7 @@ fn inflate(comp: &[u8], max: usize) -> Result<Vec<u8>, Ad1Error> {
 /// Read the item-header fields at logical `addr`.
 fn read_item(seg: &SegmentSet, addr: u64) -> Result<RawItem, Ad1Error> {
     let head = seg.read(addr, 0x30)?;
-    let name_len = u32_le(&head, 0x2c) as usize;
+    let name_len = le_u32(&head, 0x2c) as usize;
     if name_len > MAX_NAME_LEN {
         return Err(Ad1Error::Malformed(format!(
             "item at {addr:#x} declares name length {name_len} (> {MAX_NAME_LEN})"
@@ -325,12 +324,12 @@ fn read_item(seg: &SegmentSet, addr: u64) -> Result<RawItem, Ad1Error> {
         .map(|c| if c == '/' { '_' } else { c })
         .collect();
     Ok(RawItem {
-        next_item_addr: u64_le(&head, 0x00),
-        first_child_addr: u64_le(&head, 0x08),
-        first_metadata_addr: u64_le(&head, 0x10),
-        zlib_metadata_addr: u64_le(&head, 0x18),
-        decompressed_size: u64_le(&head, 0x20),
-        item_type: u32_le(&head, 0x28),
+        next_item_addr: le_u64(&head, 0x00),
+        first_child_addr: le_u64(&head, 0x08),
+        first_metadata_addr: le_u64(&head, 0x10),
+        zlib_metadata_addr: le_u64(&head, 0x18),
+        decompressed_size: le_u64(&head, 0x20),
+        item_type: le_u32(&head, 0x28),
         name,
     })
 }
@@ -365,10 +364,10 @@ fn read_metadata(seg: &SegmentSet, first_addr: u64) -> Result<Meta, Ad1Error> {
             )));
         }
         let h = seg.read(addr, 0x14)?;
-        let next = u64_le(&h, 0x00);
-        let category = u32_le(&h, 0x08);
-        let key = u32_le(&h, 0x0c);
-        let dlen = u32_le(&h, 0x10) as usize;
+        let next = le_u64(&h, 0x00);
+        let category = le_u32(&h, 0x08);
+        let key = le_u32(&h, 0x0c);
+        let dlen = le_u32(&h, 0x10) as usize;
         if dlen > MAX_META_DATA {
             return Err(Ad1Error::Malformed(format!(
                 "metadata record at {addr:#x} declares data length {dlen} (> {MAX_META_DATA})"

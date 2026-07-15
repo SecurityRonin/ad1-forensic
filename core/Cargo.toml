@@ -33,6 +33,9 @@ vfs = ["dep:forensic-vfs"]
 [dependencies]
 flate2    = { workspace = true }
 thiserror = { workspace = true }
+# Shared panic-free bounded byte readers (replaces the local bytes.rs; its
+# `off + 4` also fixes a latent usize-overflow the local copy could hit).
+forensic-bytes = { version = "0.1", path = "../../forensic-bytes" }
 md-5      = { workspace = true, optional = true }
 sha1      = { workspace = true, optional = true }
 # forensic-vfs — the read-only FileSystem navigation contract. Optional so the
