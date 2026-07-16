@@ -4,7 +4,7 @@ name: Release
 # channels — this repo ships libraries only). Push a signed `vX.Y.Z` tag.
 on:
   push:
-    tags: ["v*"]
+    tags: ["v[0-9]*"]
 
 env:
   CARGO_TERM_COLOR: always
