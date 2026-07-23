@@ -24,9 +24,9 @@
 //!   therefore wrapped in a `Mutex`, recovered-on-poison, so every `&self` read is
 //!   serialized rather than racing. No content cache is needed — `read_at` is
 //!   positioned and inflates only the chunks a range overlaps.
-//! - **FsKind.** `forensic-vfs`'s `FsKind` has no AD1/archive variant (it is
-//!   `#[non_exhaustive]`, and this crate must not add one), so
-//!   [`FileSystem::kind`] reports [`FsKind::Other`].
+//! - **FsKind.** `forensic-vfs` re-exports `forensicnomicon_core`'s `FsKind`,
+//!   which carries a dedicated [`FsKind::AD1`] identity, so
+//!   [`FileSystem::kind`] reports [`FsKind::AD1`].
 //! - **Sector sizes.** An AD1 image is a logical container with no media geometry;
 //!   [`FileSystem::sector_sizes`] reports 512 for all three fields (a neutral
 //!   default, not a real on-media block).
@@ -238,8 +238,8 @@ fn build_tree(entries: &[Ad1Entry]) -> Vec<Node> {
 
 impl FileSystem for Ad1Vfs {
     fn kind(&self) -> FsKind {
-        // forensic-vfs has no AD1/archive FsKind variant (see the module note).
-        FsKind::Other
+        // Dedicated AD1 identity from forensicnomicon-core (see the module note).
+        FsKind::AD1
     }
 
     fn root(&self) -> FileId {
@@ -450,7 +450,7 @@ mod tests {
     #[test]
     fn kind_root_zone_and_sectors() {
         let (_d, fs, _e) = open_sample();
-        assert_eq!(fs.kind(), FsKind::Other);
+        assert_eq!(fs.kind(), FsKind::AD1);
         assert!(matches!(fs.root(), FileId::Opaque(0)));
         // AD1's timestamps are zoneless display strings, not epochs.
         assert_eq!(fs.timestamp_zone(), TimeZonePolicy::LocalUnknown);

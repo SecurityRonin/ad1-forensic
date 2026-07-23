@@ -35,12 +35,12 @@ flate2    = { workspace = true }
 thiserror = { workspace = true }
 # Shared panic-free bounded byte readers (replaces the local bytes.rs; its
 # `off + 4` also fixes a latent usize-overflow the local copy could hit).
-safe-read = { version = "0.1", path = "../../safe-read" }
+safe-read = "0.2"
 md-5      = { workspace = true, optional = true }
 sha1      = { workspace = true, optional = true }
 # forensic-vfs — the read-only FileSystem navigation contract. Optional so the
 # bare reader stays dependency-light; the `vfs` feature turns on the adapter.
-forensic-vfs = { version = "0.1", optional = true }
+forensic-vfs = { version = "0.7", optional = true }
 
 [dev-dependencies]
 # Integration tests build fixtures via the `testfix` feature and write to a tempdir.
