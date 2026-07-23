@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "ad1-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ad1-core",
  "flate2",
@@ -18,7 +18,7 @@ dependencies = [
 
 [[package]]
 name = "ad1-forensic"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ad1-core",
  "forensicnomicon",
