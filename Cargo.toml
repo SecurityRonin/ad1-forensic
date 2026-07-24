@@ -7,7 +7,7 @@ members = ["core", "forensic"]
 exclude = ["fuzz"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 # Published libraries keep a low, CI-verified MSRV (a compatibility promise).
 rust-version = "1.85"
@@ -16,7 +16,7 @@ repository = "https://github.com/SecurityRonin/ad1-forensic"
 authors = ["Albert Hui <albert@securityronin.com>"]
 
 [workspace.dependencies]
-ad1-core        = { path = "core", version = "0.1.0" }
+ad1-core        = { path = "core", version = "0.1.1" }
 # zlib decompression of AD1 file-data chunks — flate2's default miniz_oxide
 # backend is pure-Rust (NO bzip2-sys/zstd-sys/lzma-sys; keep the tree C-free).
 flate2          = { version = "1", default-features = false, features = ["rust_backend"] }
