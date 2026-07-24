@@ -30,8 +30,8 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use safe_read::{le_u32, le_u64};
 use flate2::read::ZlibDecoder;
+use safe_read::{le_u32, le_u64};
 use segment::SegmentSet;
 
 /// Marker string present in every AD1 segment header.
