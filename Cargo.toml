@@ -7,7 +7,7 @@ members = ["core", "forensic"]
 exclude = ["fuzz"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 # Published libraries keep a low, CI-verified MSRV (a compatibility promise).
 rust-version = "1.85"
