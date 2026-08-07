@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/SecurityRonin/ad1-forensic/compare/ad1-core-v0.1.1...ad1-core-v0.1.2) - 2026-08-07
+
+### Documentation
+
+- *(core)* stop linking public docs at the private SegmentSet
+
 ## [0.1.1](https://github.com/SecurityRonin/ad1-forensic/compare/ad1-core-v0.1.0...ad1-core-v0.1.1) - 2026-07-24
 
 ### Added
