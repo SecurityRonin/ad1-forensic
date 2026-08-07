@@ -10,7 +10,7 @@
 //!
 //! The on-disk layout follows the al3ks1s/AD1-tools reverse-engineered reference
 //! (see `docs/format.md`). All integers are little-endian; tree addresses are
-//! logical offsets handled by [`segment::SegmentSet`].
+//! logical offsets handled internally by `segment::SegmentSet` (private).
 
 #![forbid(unsafe_code)]
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
