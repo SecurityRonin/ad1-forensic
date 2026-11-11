@@ -40,7 +40,7 @@ md-5      = { workspace = true, optional = true }
 sha1      = { workspace = true, optional = true }
 # forensic-vfs — the read-only FileSystem navigation contract. Optional so the
 # bare reader stays dependency-light; the `vfs` feature turns on the adapter.
-forensic-vfs = { version = "0.7", optional = true }
+forensic-vfs = { version = "0.10", optional = true }
 
 [dev-dependencies]
 # Integration tests build fixtures via the `testfix` feature and write to a tempdir.
