@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/SecurityRonin/ad1-forensic/compare/ad1-core-v0.1.2...ad1-core-v0.2.0) - 2026-11-11
+
+### Fixed
+
+- *(vfs)* [**breaking**] implement forensic-vfs 0.10, the trait the engine links against
+
 ## [0.1.2](https://github.com/SecurityRonin/ad1-forensic/compare/ad1-core-v0.1.1...ad1-core-v0.1.2) - 2026-08-07
 
 ### Documentation
